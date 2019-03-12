@@ -6,6 +6,7 @@
 #define     RXD                   BIT1                      // RXD on P1.1
 
 #define     ADC_PIN               BIT3                      // ADC on P1.3
+#define     ADC_INCH              INCH_3
 
 
 // wait for time t
@@ -45,16 +46,16 @@ void init_output() {
 
 
 // get the current reading from the ADC
-void get_adc() {
+int get_adc() {
   ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
   while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
   return ADC10MEM;
 }
 // initialization function:
 void init_adc() {
-  ADC10CTL0 = ADC10SHT_2 + ADC10ON; 	    // ADC10ON
-  ADC10CTL1 = INCH_1;                       // input A1
-  ADC10AE0 |= ADC_PIN;                      // PA.1 ADC option select
+  ADC10CTL0 = ADC10SHT_2 + ADC10ON; 	      // ADC10ON
+  ADC10CTL1 = INCH_3;                       // input A*
+  ADC10AE0 |= ADC_PIN;                      // PA.* ADC option select
 }
 
 
@@ -65,11 +66,12 @@ void main() {
   P1DIR = 0x00;                 // clear P1 direction
   
   init_output();
+  init_adc();
   
   int i;
   for (i = 0; i < 10000; i++) {
-    output(i);
-    wait(1000);
+    output(get_adc());
+    wait(10000);
   }
 }
 
