@@ -34,8 +34,8 @@ void init_output() {
   P1OUT |= TXD;   // initially set TXD to high for some reason
 
   /* Configure hardware UART */
-  P1SEL = BIT1 + BIT2 ; // P1.1 = RXD, P1.2=TXD
-  P1SEL2 = BIT1 + BIT2 ; // P1.1 = RXD, P1.2=TXD
+  P1SEL  |= RXD | TXD ; // P1.1 = RXD, P1.2=TXD
+  P1SEL2 |= RXD | TXD ; // P1.1 = RXD, P1.2=TXD
   UCA0CTL1 |= UCSSEL_2; // Use SMCLK
   UCA0BR0 = 104; // Set baud rate to 9600 with 1MHz clock (Data Sheet 15.3.13)
   UCA0BR1 = 0;   // Set baud rate to 9600 with 1MHz clock
@@ -46,11 +46,15 @@ void init_output() {
 
 // get the current reading from the ADC
 void get_adc() {
-
+  ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
+  return ADC10MEM;
 }
 // initialization function:
 void init_adc() {
-
+  ADC10CTL0 = ADC10SHT_2 + ADC10ON; 	    // ADC10ON
+  ADC10CTL1 = INCH_1;                       // input A1
+  ADC10AE0 |= ADC_PIN;                      // PA.1 ADC option select
 }
 
 
