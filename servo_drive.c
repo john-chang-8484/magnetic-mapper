@@ -2,7 +2,8 @@
 
 
 // constant parameters:
-#define MOTOR_PIN BIT2
+#define MOTOR_PIN BIT6
+// NOTE: currently this requires the pin in question to have TA0.1 capability
 
 
 // wait for time t

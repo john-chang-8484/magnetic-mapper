@@ -53,7 +53,8 @@ int get_adc() {
 }
 // initialization function:
 void init_adc() {
-  ADC10CTL0 = ADC10SHT_2 + ADC10ON; 	      // ADC10ON
+  ADC10CTL0 = ADC10SHT_2 | ADC10ON;         // ADC10ON
+                                            // V+ = Vcc, V- = Vss (gnd)
   ADC10CTL1 = INCH_3;                       // input A*
   ADC10AE0 |= ADC_PIN;                      // PA.* ADC option select
 }
@@ -70,7 +71,7 @@ void main() {
   
   int i;
   for (i = 0; i < 10000; i++) {
-    output(get_adc());
+    output(get_adc());//get_adc());
     wait(10000);
   }
 }
