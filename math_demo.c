@@ -29,6 +29,7 @@ int check_math() {
   return sizeof(num) == 4;
 }
 
+// note the implicit long->int cast
 int num2int(num x) {
     return x / FRAC;
 }
@@ -45,6 +46,7 @@ num div(num a, num b) {
     return ((a * FRACRT) / (b / FRACRT));
 }
 
+// note: breaks for n much bigger than PI
 num sine(num x) {
     num terms[NUM_TERMS];
     int i;
@@ -111,9 +113,9 @@ void main() {
     return;
   }
   
-  num i = NUM(0);
+  num i = 0-(PI);
   num step = NUM(1) / 100;
-  for (i = 0; ; i += step) {
+  for (i = 0; 1; i += step) {
     output(num2int(1000 * sine(i)));
     wait(1000);
   }

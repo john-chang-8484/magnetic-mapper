@@ -16,6 +16,14 @@ port = "/dev/ttyACM0"  #for Linux
 #port = "/dev/tty.uart-XXXX" #For Mac?
 
 
+# compute the sign for the integer
+def compute_sign(n):
+    if n < 32768:
+        return n
+    else:
+        return n - 65536
+
+
 #start our program proper:
 #open the serial port
 try:
@@ -37,5 +45,5 @@ while(1): #loop forever
     if len(data) > 0: #was there a byte to read?
         bytes.append(data)
         if len(bytes) > 1:
-            print 256*ord(bytes[0]) + ord(bytes[1]), (ord(bytes[0]), ord(bytes[1]))
+            print compute_sign(256*ord(bytes[0]) + ord(bytes[1])), (ord(bytes[0]), ord(bytes[1]))
             bytes = []

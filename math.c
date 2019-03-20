@@ -58,17 +58,19 @@ int main () {
     return 0;
   num i = NUM(7) + (NUM(1) >> 2); // 7.25
   num j = NUM(8) + (NUM(3) >> 2); // 8.75
+  num k = NUM(-3);
   
-  printf("%d %d %d %d %d %d %d\n",
+  printf("%d %d %d %d %d %d %d %d \n",
     num2int(mul(i,j)), 
     num2int(i + j), 
     num2int(256 * div(i, j)), 
     num2int(sine(PI)), 
     num2int(sine(PI / 2)),
     num2int(100 * PI),
-    num2int(100 * sine(PI/6)));
+    num2int(100 * sine(-PI/6)),
+    num2int(mul(i, k)));
   printf("expect:\n");
-  printf("63 16 212 0 1 314 50\n");
+  printf("63 16 212 0 1 314 -50 -21\n");
   return 0;
 }
 
