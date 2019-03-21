@@ -53,14 +53,44 @@ def render_tracks(screen, tracks):
                                 convert_to_pix(proj(track[i])))
 
 
+# magnetic field as a function of radius
+def B(r):
+    return (r[1], -r[0], 0.)
+
+
+# makes a single track, starting from a particular point
+def make_track(r):
+    print r
+    ans = [r]
+    for i in range(0, 20):
+        ans.append(add(ans[-1], constmul(0.05, B(ans[-1]))))
+    return ans
+
+# random vector
+def randvec():
+    return ( random.randint(-100, 100) / 200.,
+             random.randint(-100, 100) / 200.,
+             random.randint(-100, 100) / 200. )
+
+
+# makes a list of tracks:
+def make_tracks():
+    ans = []
+    for i in range(0, 20):
+        ans.append(make_track(randvec()))
+    return ans
+
+
 def main():
     pygame.init()
     pygame.display.set_caption("Magnetic Field Visualizer")
     screen = pygame.display.set_mode(window)
     
+    tracks = make_tracks()
+    
     done = False
     while not done:
-        render_tracks(screen, [[(0.1, 0.1, 0.1), (0.3, 0.2, -0.2)]])
+        render_tracks(screen, tracks)
         #General Pygame Management.------------------------
         #(And Key Commands)
         for event in pygame.event.get():
