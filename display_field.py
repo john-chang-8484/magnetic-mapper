@@ -10,17 +10,25 @@ from math import sin, cos
 window = [600, 600]#sets the size of the window
 tau = 6.28318530717958#Equal to 2pi. One full turn in radians.
 
-# these vectors determine the viewing plane:
-offset_vec = (0., 0., 5.)
-plane_u = (1., 0., 0.0)
-plane_v = (0., 1., 0.0)
-
 # integration step:
-ISTEP = 0.03
+ISTEP = 0.003
 # track constants:
 TRACKLEN = 50
 
 #---------------------------------------------------------------------------
+
+# a class that describes all the view parameters:
+class View:
+    # these vectors determine the viewing plane:
+    def __init__(self):
+        self.offset_vec = (0., 0., 3.)
+        self.plane_u = (1., 0., 0.) # plane x direction
+        self.plane_v = (0., 1., 0.) # plane y direction
+        self.plane_w = (0., 0., -1.) # plane z direction (into screen)
+        self.view_back = 2.0        # offset of viewpoint in the negative z direction (out of screen)
+
+
+# some vector functions:
 
 def add(v1, v2):
     return (v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2])
@@ -34,10 +42,27 @@ def constmul(a, v):
 def dot(v1, v2):
     return (v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2])
 
+def length(v):
+    return math.sqrt(dot(v, v))
 
-def proj(vec):
-    v = sub(vec, offset_vec)
-    return (dot(v, plane_u), dot(v, plane_v))
+
+# project a vector onto plane_u and plane_v (orthographic)
+def proj(vec, view):
+    v = sub(vec, view.offset_vec)
+    return (dot(v, view.plane_u), dot(v, view.plane_v))
+
+
+# project a vector onto plane_u and plane_v, with the viewpoint located back from
+# the origin of the plane by the constant view_back
+def point_proj(vec, view):
+    r = sub(vec, view.offset_vec)
+    u = dot(r, view.plane_u)
+    v = dot(r, view.plane_v)
+    w = dot(r, view.plane_w)
+    if (w < 0.1): # crop things behind the viewing screen
+        return None
+    s = view.view_back / w # scale factor that accounts for forshortening
+    return (u * s, v * s)
 
 
 # convert a 2d vector to pixel locations
@@ -45,21 +70,26 @@ def convert_to_pix(v):
     return (int(window[0] * (v[0] + 0.5)), int(window[1] * (v[1] + 0.5)))
 
 
-def render_tracks(screen, tracks):
+# set the projection function we use:
+proj_fn = point_proj
+def render_tracks(screen, tracks, view):
     screen.fill((0, 0, 0))
     for track in tracks:
         for i in range(1, len(track)):
             alpha = (255 * i) / len(track)
-            x_s, y_s = proj(track[i - 1])
-            x_f, y_f = proj(track[i])
-            pygame.draw.line(screen, (alpha, 255 - alpha, 250),
-                                convert_to_pix(proj(track[i - 1])),
-                                convert_to_pix(proj(track[i])))
+            p_s = proj_fn(track[i - 1], view)
+            p_f = proj_fn(track[i],     view)
+            if p_s != None and p_f != None:
+                pygame.draw.line(screen, (alpha, 255 - alpha, 250),
+                                 convert_to_pix(p_s),
+                                 convert_to_pix(p_f))
 
 
 # magnetic field as a function of radius
+# test function is simple dipole:
+m = (0., 0., 1.)
 def B(r):
-    return (r[1], -r[0], 0.)
+    return sub( constmul( dot(m, r) * 3./(length(r)**5), r) , constmul(1./(length(r)**3), m) )
 
 
 # grow a track by one
@@ -68,7 +98,7 @@ def grow_track(track):
     correct = add(track[-1], constmul(ISTEP, B(predict)))
     track.append(constmul(0.5, add(predict, correct)))
 
-# shrink a track by amount
+# shrink a track by one
 def shrink_track(track):
     track.pop(0)
 
@@ -86,7 +116,7 @@ def make_track(r):
         grow_track(ans)
     return ans
 
-# random vector
+# random vector in [-0.5, 0.5]^3
 def randvec():
     return ( random.randint(-100, 100) / 200.,
              random.randint(-100, 100) / 200.,
@@ -101,19 +131,38 @@ def make_tracks():
     return ans
 
 
+# make a view corresponding to these angles:
+def get_view(phi, theta, offset=5.):
+    ans = View()
+    w = ( math.cos(phi) * math.sin(theta), math.sin(phi) * math.sin(theta), math.cos(theta) )
+    ans.offset_vec = constmul(-offset, w)
+    ans.plane_w = w
+    u = ( -math.sin(phi), math.cos(phi), 0. )
+    ans.plane_u = u
+    v = ( math.cos(phi) * math.cos(theta), math.sin(phi) * math.cos(theta), -math.sin(theta) )
+    ans.plane_v = v
+    return ans
+
+
 def main():
     pygame.init()
     pygame.display.set_caption("Magnetic Field Visualizer")
     screen = pygame.display.set_mode(window)
     
     tracks = make_tracks()
+    view = View()
+    phi = 0.
+    theta = tau/3
     
     done = False
     while not done:
         evolve_all_tracks(tracks)
+        phi += 0.005
+        #theta += 0.005
+        view = get_view(phi, theta)
         if not random.randint(0, 100):
             tracks.append(make_track(randvec()))
-        render_tracks(screen, tracks)
+        render_tracks(screen, tracks, view)
         #General Pygame Management.------------------------
         #(And Key Commands)
         for event in pygame.event.get():
