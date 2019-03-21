@@ -25,8 +25,8 @@ def dot(v1, v2):
 
 # these vectors determine the viewing plane:
 offset_vec = (0., 0., 5.)
-plane_u = (1., 0., 0.)
-plane_v = (0., 1., 0.)
+plane_u = (1., 0., 0.0)
+plane_v = (0., 1., 0.0)
 
 def proj(vec):
     v = sub(vec, offset_vec)
@@ -39,11 +39,13 @@ def convert_to_pix(v):
 
 
 def render_tracks(screen, tracks):
+    screen.fill((0, 0, 0))
     for track in tracks:
         for i in range(1, len(track)):
+            alpha = (255 * i) / len(track)
             x_s, y_s = proj(track[i - 1])
             x_f, y_f = proj(track[i])
-            pygame.draw.line(screen, (250, 250, 250),
+            pygame.draw.line(screen, (alpha, 255 - alpha, 250),
                                 convert_to_pix(proj(track[i - 1])),
                                 convert_to_pix(proj(track[i])))
 
@@ -53,12 +55,26 @@ def B(r):
     return (r[1], -r[0], 0.)
 
 
+# grow a track by one
+def grow_track(track):
+    track.append(add(track[-1], constmul(0.05, B(track[-1]))))
+
+# shrink a track by amount
+def shrink_track(track):
+    track.pop(0)
+
+# grow all tracks in a list of tracks
+def evolve_all_tracks(tracks):
+    for track in tracks:
+        grow_track(track)
+        shrink_track(track)
+
+
 # makes a single track, starting from a particular point
 def make_track(r):
-    print r
     ans = [r]
     for i in range(0, 20):
-        ans.append(add(ans[-1], constmul(0.05, B(ans[-1]))))
+        grow_track(ans)
     return ans
 
 # random vector
@@ -85,6 +101,9 @@ def main():
     
     done = False
     while not done:
+        evolve_all_tracks(tracks)
+        if not random.randint(0, 100):
+            tracks.append(make_track(randvec()))
         render_tracks(screen, tracks)
         #General Pygame Management.------------------------
         #(And Key Commands)
