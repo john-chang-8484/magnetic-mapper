@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #------------------------------Magnetic Field Visualizer------------------------------
 
-import sys, random, math, pygame
+import sys, random, math, pygame, time
 from random import randint
 from pygame.locals import *
 from math import sin, cos
@@ -9,6 +9,17 @@ from math import sin, cos
 #Constants: ----------------------------------------------------------------
 window = [600, 600]#sets the size of the window
 tau = 6.28318530717958#Equal to 2pi. One full turn in radians.
+
+# these vectors determine the viewing plane:
+offset_vec = (0., 0., 5.)
+plane_u = (1., 0., 0.0)
+plane_v = (0., 1., 0.0)
+
+# integration step:
+ISTEP = 0.03
+# track constants:
+TRACKLEN = 50
+
 #---------------------------------------------------------------------------
 
 def add(v1, v2):
@@ -23,10 +34,6 @@ def constmul(a, v):
 def dot(v1, v2):
     return (v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2])
 
-# these vectors determine the viewing plane:
-offset_vec = (0., 0., 5.)
-plane_u = (1., 0., 0.0)
-plane_v = (0., 1., 0.0)
 
 def proj(vec):
     v = sub(vec, offset_vec)
@@ -57,7 +64,9 @@ def B(r):
 
 # grow a track by one
 def grow_track(track):
-    track.append(add(track[-1], constmul(0.05, B(track[-1]))))
+    predict = add(track[-1], constmul(ISTEP, B(track[-1])))
+    correct = add(track[-1], constmul(ISTEP, B(predict)))
+    track.append(constmul(0.5, add(predict, correct)))
 
 # shrink a track by amount
 def shrink_track(track):
@@ -73,7 +82,7 @@ def evolve_all_tracks(tracks):
 # makes a single track, starting from a particular point
 def make_track(r):
     ans = [r]
-    for i in range(0, 20):
+    for i in range(0, TRACKLEN):
         grow_track(ans)
     return ans
 
@@ -115,6 +124,7 @@ def main():
         pygame.display.update()#Update Screen
         pygame.display.flip()
         #--------------------------------------------------
+        time.sleep(0.03)
 
 
 main()
