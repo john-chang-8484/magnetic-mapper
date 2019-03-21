@@ -8,11 +8,6 @@ from math import sin, cos
 
 #Constants: ----------------------------------------------------------------
 window = [600, 600]#sets the size of the window
-zoom = 1
-visibility_distance = 100000.0
-black = 0,0,0#Colour
-boxsize = 10.0#Side Length of Voxles
-bh = boxsize/2#Half ofSide Lenght of Voxles
 tau = 6.28318530717958#Equal to 2pi. One full turn in radians.
 #---------------------------------------------------------------------------
 
