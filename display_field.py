@@ -89,7 +89,8 @@ def render_tracks(screen, tracks, view):
 # test function is simple dipole:
 m = (0., 0., 1.)
 def B(r):
-    return sub( constmul( dot(m, r) * 3./(length(r)**5), r) , constmul(1./(length(r)**3), m) )
+    #return constmul(5.0, (0., -r[2], r[1]))
+    return sub( constmul( dot(m, r) * 3./(0.00+length(r)**5), r) , constmul(1./(0.00+length(r)**3), m) )
 
 
 # grow a track by one
@@ -157,7 +158,7 @@ def main():
     done = False
     while not done:
         evolve_all_tracks(tracks)
-        phi += 0.005
+        #phi += 0.005
         #theta += 0.005
         view = get_view(phi, theta)
         if not random.randint(0, 100):
