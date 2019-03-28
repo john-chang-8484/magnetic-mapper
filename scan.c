@@ -1,7 +1,7 @@
 #include "msp430.h"
 
 // constant parameters:
-#define MOTOR_PIN_1         BIT6                      // Motor pin on P1.6 : alt
+#define MOTOR_PIN_1         BIT1                      // Motor pin on P2.1 : alt
 #define MOTOR_PIN_2         BIT5                      // Motor pin on P2.5 : azm
 #define TXD                 BIT2                      // TXD on P1.2
 #define RXD                 BIT1                      // RXD on P1.1
@@ -11,6 +11,8 @@
 // usage: e is an expression
 #define azmto(e) old = azm; azm = (e); glide_servo(old, azm, 1);
 #define altto(e) old = alt; alt = (e); glide_servo(old, alt, 2);
+// do a brief warmup of the servos
+#define servo_warmup() azmto(1200); altto(1200); azmto(1000); altto(1000);
 
 
 
@@ -67,11 +69,11 @@ void set_servo(int pwm, int n) {
 
 // initialization function for servo stuff
 void init_servo() {
-  P1DIR |= MOTOR_PIN_1; 		  // set motor pins to output
-  P1SEL |= MOTOR_PIN_1; 			// set motor pins to TA output 1
+  P2DIR |= MOTOR_PIN_1;             // set motor pins to output
+  P2SEL |= MOTOR_PIN_1;             // set motor pins to TA output 1
   
-  P2DIR |= MOTOR_PIN_2; 		  // set motor pins to output
-  P2SEL |= MOTOR_PIN_2; 			// set motor pins to TA output 2
+  P2DIR |= MOTOR_PIN_2;             // set motor pins to output
+  P2SEL |= MOTOR_PIN_2;             // set motor pins to TA output 2
   
   /* next three lines to use internal calibrated 1MHz clock: */
   BCSCTL1 = CALBC1_1MHZ;                    // Set range
@@ -85,10 +87,10 @@ void init_servo() {
   // set timer period
   TA1CCR0 = 10000;
   
-  TA1CCTL1 |= OUTMOD_7 | CCIE;			// CCR1 reset/set
+  TA1CCTL1 |= OUTMOD_7;			// CCR1 reset/set
   TA1CCR1 = 1000; 				  // CCR1 PWM duty cycle
   
-  TA1CCTL2 |= OUTMOD_7 | CCIE;     // CCR1 reset/set
+  TA1CCTL2 |= OUTMOD_7;     // CCR1 reset/set
   output(CCTL2);
   TA1CCR2 = 1000;          // CCR1 PWM duty cycle
   
@@ -126,10 +128,12 @@ void main(void)
   int alt = 1000; //altto(alt);
   int azm = 1000; //azmto(azm);
 
+  servo_warmup();
+
   wait(100000);
-  azmto(1200);
+  altto(1200);
   wait(100000);
-  azmto(1000);
+  altto(1000);
   output(TACCTL1);
   output(TACCTL2);
   while(1); // loop forever
