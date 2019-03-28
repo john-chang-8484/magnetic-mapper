@@ -57,10 +57,10 @@ void init_output() {
 void set_servo(int pwm, int n) {
   switch (n) {
     case 1:
-      CCR1 = pwm;
+      TA1CCR1 = pwm;
       break;
     case 2:
-      CCR2 = pwm;
+      TA1CCR2 = pwm;
       break;
   }
 }
@@ -78,16 +78,21 @@ void init_servo() {
   DCOCTL = CALDCO_1MHZ;
   BCSCTL2 &= ~(DIVS_3);                     // SMCLK = DCO = 1MHz
   
+  // reset capture bit (so that we are always comparing)
+  TA1CCTL1 &= ~CAP;
+  TA1CCTL2 &= ~CAP;
+  
   // set timer period
-  CCR0 = 10000;
+  TA1CCR0 = 10000;
   
-  CCTL1 = OUTMOD_7;			// CCR1 reset/set
-  CCR1 = 1000; 				  // CCR1 PWM duty cycle
+  TA1CCTL1 |= OUTMOD_7 | CCIE;			// CCR1 reset/set
+  TA1CCR1 = 1000; 				  // CCR1 PWM duty cycle
   
-  CCTL2 = OUTMOD_7;     // CCR1 reset/set
-  CCR2 = 1000;          // CCR1 PWM duty cycle
+  TA1CCTL2 |= OUTMOD_7 | CCIE;     // CCR1 reset/set
+  output(CCTL2);
+  TA1CCR2 = 1000;          // CCR1 PWM duty cycle
   
-  TACTL = TASSEL_2 + MC_1; 		// SMCLK, up mode
+  TA1CTL = TASSEL_2 + MC_1; 		// SMCLK, up mode
 }
 
 // gently glide a servo motor from one value to another:
@@ -121,11 +126,12 @@ void main(void)
   int alt = 1000; //altto(alt);
   int azm = 1000; //azmto(azm);
 
-  
   wait(100000);
   azmto(1200);
   wait(100000);
   azmto(1000);
+  output(TACCTL1);
+  output(TACCTL2);
   while(1); // loop forever
 }
 
