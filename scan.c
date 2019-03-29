@@ -1,8 +1,8 @@
 #include "msp430.h"
 
 // constant parameters:
-#define MOTOR_PIN_1         BIT1                      // Motor pin on P2.1 : alt
-#define MOTOR_PIN_2         BIT5                      // Motor pin on P2.5 : azm
+#define MOTOR_PIN_1         BIT1                      // Motor pin on P2.1 : azm
+#define MOTOR_PIN_2         BIT5                      // Motor pin on P2.5 : alt
 #define TXD                 BIT2                      // TXD on P1.2
 #define RXD                 BIT1                      // RXD on P1.1
 
@@ -91,7 +91,6 @@ void init_servo() {
   TA1CCR1 = 1000; 				  // CCR1 PWM duty cycle
   
   TA1CCTL2 |= OUTMOD_7;     // CCR1 reset/set
-  output(CCTL2);
   TA1CCR2 = 1000;          // CCR1 PWM duty cycle
   
   TA1CTL = TASSEL_2 + MC_1; 		// SMCLK, up mode
@@ -130,12 +129,32 @@ void main(void)
 
   servo_warmup();
 
+  // scanning procedure:
+  
+  // wait for user to start python program
   wait(100000);
-  altto(1200);
-  wait(100000);
-  altto(1000);
-  output(TACCTL1);
-  output(TACCTL2);
+  
+  output(1); // begin header
+  
+  azmto(550);
+  altto(900);
+  for (; azm < 1170; ) {
+    
+    for(; alt < 1325; ) {
+      
+      output(0);
+      output(azm);
+      output(alt);
+      
+      wait(1000);
+      
+      altto(alt + 50);
+    }
+    
+    altto(900);
+    azmto(azm + 50);
+  }
+  
   while(1); // loop forever
 }
 
