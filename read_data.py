@@ -28,7 +28,7 @@ def compute_sign(n):
 
 
 if TEST:
-    integers = [1, 1, 0, 550, 1000, 700, 701, 702, 0, 600, 1000, 700, 701, 702, 0, 650, 1000, 700, 701, 702, 2]
+    integers = [1, 1, 3, 699, 698, 697, 3, 697, 698, 699, 3, 697, 697, 697, 0, 550, 1000, 700, 701, 702, 0, 600, 1000, 700, 701, 702, 0, 650, 1000, 700, 701, 702, 2]
 else:
     integers = [] # the integers that will be read into the csv file
     #start our program proper:
@@ -52,7 +52,9 @@ else:
         if len(data) > 0: #was there a byte to read?
             bytes.append(data)
             if len(bytes) > 1:
-                integers.append(compute_sign(256*ord(bytes[0]) + ord(bytes[1])))
+                num = compute_sign(256*ord(bytes[0]) + ord(bytes[1]))
+                integers.append(num)
+                print num
                 bytes = []
         # end code is 2, 1
         if len(integers) >= 2 and integers[-1] == 1 and integers[-2] == 2:
@@ -62,6 +64,9 @@ print "Parsing data and writing to file..."
 
 # parse the data stream:
 rows = [["azm", "alt", "B_r", "B_phi", "B_theta"]]
+# calibration readings:
+avgs = [0., 0., 0.]
+count = 0
 
 i = 0
 while i < len(integers):
@@ -72,6 +77,22 @@ while i < len(integers):
         i += 6
     elif integers[i] == 2:
         break # done here
+    elif integers[i] == 3:
+        for j in range(0, 3):
+            avgs[j] += integers[i + 1 + j]
+        count += 1
+        i += 4
+    else:
+        print "hmmm, invalid integer block header of %d" % integers[i]
+        i += 1
+
+# take averages:
+for i in range(0, 3):
+    avgs[i] = avgs[i] / float(count)
+
+for i in range(1, len(rows)):
+    for j in range(0, 3):
+        rows[i][2 + j] -= avgs[j]
 
 with open("out.csv", "w") as f:
     writer = csv.writer(f)

@@ -170,6 +170,7 @@ void main(void)
   init_adc();
   
   int old; // a variable used to temporarily store old values
+  int i; // counting variable
   // intialize altitue and azimuth
   int alt = 1000; //altto(alt);
   int azm = 1000; //azmto(azm);
@@ -183,11 +184,25 @@ void main(void)
   
   output(1); // begin header
   
-  azmto(550);
+  // calibration:
+  altto(1325);
+  azmto(1170);
+  wait(10000);
+  for (i = 0; i < 10; i++) {
+    wait(1000);
+    output(3);
+    output(get_r());
+    output(get_phi());
+    output(get_theta());
+  }
+  
   altto(900);
-  for (; azm < 1170; ) {
+  azmto(550);
+  for (; alt < 1325; ) {
     
-    for(; alt < 1325; ) {
+    for(; azm < 1170; ) {
+      
+      wait(1000);
       
       output(0);
       output(azm);
@@ -196,20 +211,12 @@ void main(void)
       output(get_phi());
       output(get_theta());
       
-      wait(1000);
+      azmto(azm + 50);
       
-      altto(alt + 50);
     }
     
-    altto(900);
-    azmto(azm + 50);
-  }
-  
-  for (old = 0; old < 100; old++) {
-    output(2);
-    output(get_r());
-    output(get_phi());
-    output(get_theta());
+    altto(alt + 50);
+    azmto(550);
   }
   
   while(1); // loop forever
