@@ -37,6 +37,15 @@ AZM_0 = 750. # [pwm us]
 R_MAJ = 0.03 # [m]
 R_MIN = 0.15 # [m]
 
+
+# rendering parameters:
+
+# maximum size a field vector can be drawn as
+MAX_VEC = 0.07 # [m]
+
+# radius of the balls
+BALL_RAD = 0.005 # [m]
+
 #---------------------------------------------------------------------------
 
 # a class that describes all the view parameters:
@@ -85,6 +94,14 @@ def point_proj(vec, view):
     s = view.view_back / w # scale factor that accounts for forshortening
     return (u * s, v * s)
 
+# get the s for a vector and a view
+def get_s(vec, view):
+    r = sub(vec, view.offset_vec)
+    w = dot(r, view.plane_w)
+    if (w < 0.1): # crop things behind the viewing screen
+        return None
+    s = view.view_back / w # scale factor that accounts for forshortening
+    return s
 
 # convert a 2d vector to pixel locations
 def convert_to_pix(v):
@@ -93,68 +110,33 @@ def convert_to_pix(v):
 
 # set the projection function we use:
 proj_fn = point_proj
-def render_tracks(screen, tracks, view):
+def render(screen, view, field_points):
     screen.fill((0, 0, 0))
-    for track in tracks:
-        for i in range(1, len(track)):
-            alpha = (255 * i) / len(track)
-            p_s = proj_fn(track[i - 1], view)
-            p_f = proj_fn(track[i],     view)
-            if p_s != None and p_f != None:
-                pygame.draw.line(screen, (alpha, 255 - alpha, 250),
-                                 convert_to_pix(p_s),
-                                 convert_to_pix(p_f))
-
-
-# magnetic field as a function of radius
-# test function is simple dipole:
-m = (0., 0., 1.)
-def B(r):
-    #return constmul(5.0, (0., -r[2], r[1]))
-    return sub( constmul( dot(m, r) * 3./(0.00+length(r)**5), r) , constmul(1./(0.00+length(r)**3), m) )
-
-
-# grow a track by one
-def grow_track(track):
-    predict = add(track[-1], constmul(ISTEP, B(track[-1])))
-    correct = add(track[-1], constmul(ISTEP, B(predict)))
-    track.append(constmul(0.5, add(predict, correct)))
-
-# shrink a track by one
-def shrink_track(track):
-    track.pop(0)
-
-# grow all tracks in a list of tracks
-def evolve_all_tracks(tracks):
-    for track in tracks:
-        grow_track(track)
-        shrink_track(track)
-
-
-# makes a single track, starting from a particular point
-def make_track(r):
-    ans = [r]
-    for i in range(0, TRACKLEN):
-        grow_track(ans)
-    return ans
-
-# random vector in [-0.5, 0.5]^3
-def randvec():
-    return ( random.randint(-100, 100) / 200.,
-             random.randint(-100, 100) / 200.,
-             random.randint(-100, 100) / 200. )
-
-
-# makes a list of tracks:
-def make_tracks():
-    ans = []
-    for i in range(0, 20):
-        ans.append(make_track(randvec()))
-    return ans
+    
+    max_field = max(map(lambda fp: length(fp.field), field_points)) # the maximum B field strength
+    
+    # draw vectors:
+    for fp in field_points:
+        tail = fp.point
+        tip = add(tail, constmul(MAX_VEC / max_field, fp.field))
+        p_s = proj_fn(tip, view)
+        p_f = proj_fn(tail,     view)
+        if p_s != None and p_f != None:
+            pygame.draw.line(screen, (50, 205, 250),
+                             convert_to_pix(p_s),
+                             convert_to_pix(p_f))
+    # draw bases of vectors:
+    for fp in field_points:
+        tail = fp.point
+        p = proj_fn(tail, view)
+        if p != None:
+            pygame.draw.circle(screen, (150, 100, 20),
+                             convert_to_pix(p),
+                             int(window[0] * BALL_RAD * get_s(tail, view)))
 
 
 # make a view corresponding to these angles:
-def get_view(phi, theta, offset=5.):
+def get_view(phi, theta, offset=3.):
     ans = View()
     w = ( math.cos(phi) * math.sin(theta), math.sin(phi) * math.sin(theta), math.cos(theta) )
     ans.offset_vec = constmul(-offset, w)
@@ -208,28 +190,25 @@ def main():
     
     rows = map(lambda l: map(lambda x: float(x), l), rows) # convert to floating point numbers
     
-    rows = map(field_point_from_data, rows)
+    field_points = map(field_point_from_data, rows)
     
-    print map(str, rows)
+    print map(str, field_points)
 
     pygame.init()
     pygame.display.set_caption("Magnetic Field Visualizer")
     screen = pygame.display.set_mode(window)
     
-    tracks = make_tracks()
+    
     view = View()
     phi = 0.
     theta = tau/3
     
     done = False
     while not done:
-        evolve_all_tracks(tracks)
         #phi += 0.005
         #theta += 0.005
         view = get_view(phi, theta)
-        if not random.randint(0, 100):
-            tracks.append(make_track(randvec()))
-        render_tracks(screen, tracks, view)
+        render(screen, view, field_points)
         #General Pygame Management.------------------------
         #(And Key Commands)
         for event in pygame.event.get():
