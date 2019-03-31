@@ -6,6 +6,14 @@
 #define TXD                 BIT2                      // TXD on P1.2
 #define RXD                 BIT1                      // RXD on P1.1
 
+// ADC fields:
+#define     ADC_PIN_R             BIT3                      // ADC r      on P1.3
+#define     ADC_PIN_T             BIT4                      // ADC theta  on P1.4
+#define     ADC_PIN_P             BIT5                      // ADC phi    on P1.5
+
+#define     ADC_R                 INCH_3
+#define     ADC_T                 INCH_4
+#define     ADC_P                 INCH_5
 
 // macro definitions:
 // usage: e is an expression
@@ -113,6 +121,44 @@ void glide_servo(int start, int end, int n) {
 
 
 
+// get the current reading from the ADC for r
+int get_r() {
+  ADC10CTL1 = ADC_R;
+  wait(100);
+  ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
+  ADC10CTL0 &= ~ENC;
+  return ADC10MEM;
+}
+// get the current reading from the ADC for theta
+int get_theta() {
+  ADC10CTL1 = ADC_T;
+  wait(100);
+  ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
+  ADC10CTL0 &= ~ENC;
+  return ADC10MEM;
+}
+// get the current reading from the ADC for phi
+int get_phi() {
+  ADC10CTL1 = ADC_P;
+  wait(100);
+  ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
+  ADC10CTL0 &= ~ENC;
+  return ADC10MEM;
+}
+// initialization function:
+void init_adc() {
+  ADC10CTL0 = ADC10SHT_2 | ADC10ON;             // ADC10ON
+                                                // V+ = Vcc, V- = Vss (gnd)
+  ADC10CTL1 = ADC_R;                            // input A*
+  ADC10AE0 |= ADC_PIN_R | ADC_PIN_T | ADC_PIN_P;// PA.* ADC option select
+  ADC10CTL0 &= ~ENC;
+}
+
+
+
 void main(void)
 {
   /* initialization: */
@@ -121,6 +167,7 @@ void main(void)
   P1DIR = 0x00;                 // clear P1 direction
   init_output();    // we put this one first because it kills the servo init if we put it after for some reason
   init_servo();
+  init_adc();
   
   int old; // a variable used to temporarily store old values
   // intialize altitue and azimuth
@@ -145,6 +192,9 @@ void main(void)
       output(0);
       output(azm);
       output(alt);
+      output(get_r());
+      output(get_phi());
+      output(get_theta());
       
       wait(1000);
       
@@ -153,6 +203,13 @@ void main(void)
     
     altto(900);
     azmto(azm + 50);
+  }
+  
+  for (old = 0; old < 100; old++) {
+    output(2);
+    output(get_r());
+    output(get_phi());
+    output(get_theta());
   }
   
   while(1); // loop forever

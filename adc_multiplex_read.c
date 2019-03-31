@@ -59,7 +59,7 @@ int get_r() {
   ADC10CTL0 &= ~ENC;
   return ADC10MEM;
 }
-// get the current reading from the ADC for r
+// get the current reading from the ADC for theta
 int get_theta() {
   ADC10CTL1 = ADC_T;
   wait(100);
@@ -68,7 +68,7 @@ int get_theta() {
   ADC10CTL0 &= ~ENC;
   return ADC10MEM;
 }
-// get the current reading from the ADC for r
+// get the current reading from the ADC for phi
 int get_phi() {
   ADC10CTL1 = ADC_P;
   wait(100);
