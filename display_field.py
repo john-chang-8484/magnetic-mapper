@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-#------------------------------Magnetic Field Visualizer------------------------------
+# ------------------------------ << Magnetic Field Visualizer >> ------------------------------
 
 import sys, random, math, pygame, time
 from random import randint
 from pygame.locals import *
 from math import sin, cos
+import numpy as np
+import csv
 
 #Constants: ----------------------------------------------------------------
 window = [600, 600]#sets the size of the window
@@ -14,6 +16,26 @@ tau = 6.28318530717958#Equal to 2pi. One full turn in radians.
 ISTEP = 0.003
 # track constants:
 TRACKLEN = 50
+
+# microsecond of duty in pwm per degree
+PWM_PER_DEG = (2330. - 550.) / 180.
+# conversion factor from degrees to radians
+RAD_PER_DEG = tau / 360.
+# thus, 
+RAD_PER_PWM = RAD_PER_DEG / PWM_PER_DEG
+
+
+# physical parameters:
+
+# zero point for altitude
+ALT_0 = 995. # [pwm us]
+# zero point for azimuth (not quite so important)
+AZM_0 = 750. # [pwm us]
+
+# the space sweepable by the arm looks like a torus
+# a torus has two parameters, the major and minor radius
+R_MAJ = 0.03 # [m]
+R_MIN = 0.15 # [m]
 
 #---------------------------------------------------------------------------
 
@@ -44,7 +66,6 @@ def dot(v1, v2):
 
 def length(v):
     return math.sqrt(dot(v, v))
-
 
 # project a vector onto plane_u and plane_v (orthographic)
 def proj(vec, view):
@@ -145,7 +166,52 @@ def get_view(phi, theta, offset=5.):
     return ans
 
 
+
+# stuff to convert to cartesian:
+
+# a field at a point in cartesian space:
+class FieldPoint:
+    def __init__(self, point, field):
+        self.point = point
+        self.field = field
+    def __str__(self):
+        fld = self.field; pnt = self.point
+        return "<%f, %f, %f> @ (%f, %f, %f)" % (fld[0], fld[1], fld[2], pnt[0], pnt[1], pnt[2])
+
+# produce a FieldPoint from a row of data
+def field_point_from_data(data):
+    azm = (data[0] - AZM_0) * RAD_PER_PWM
+    alt = (data[1] - ALT_0) * RAD_PER_PWM
+    B_r     = data[2]
+    B_phi   = data[3]
+    B_theta = data[4]
+    
+    pos = add(constmul(R_MAJ, (cos(azm), sin(azm), 0.)),
+              constmul(R_MIN, (cos(alt)*cos(azm), cos(alt)*sin(azm), sin(alt))))
+    
+    B = (0., 0., 0.)
+    B = add(B, constmul(B_r, (cos(alt)*cos(azm), cos(alt)*sin(azm), sin(alt))))
+    B = add(B, constmul(B_phi, (sin(azm), -cos(azm), 0.)))
+    B = add(B, constmul(B_theta, (-sin(alt)*cos(azm), -sin(alt)*sin(azm), cos(alt))))
+    
+    print B, pos
+    return FieldPoint(pos, B)
+
+
+
 def main():
+    print "reading file..."
+    with open("out.csv", "rb") as f:
+        reader = csv.reader(f)
+        rows = list(reader)
+    rows = rows[1:] # remove column labels
+    
+    rows = map(lambda l: map(lambda x: float(x), l), rows) # convert to floating point numbers
+    
+    rows = map(field_point_from_data, rows)
+    
+    print map(str, rows)
+
     pygame.init()
     pygame.display.set_caption("Magnetic Field Visualizer")
     screen = pygame.display.set_mode(window)
