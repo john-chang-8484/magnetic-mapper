@@ -126,6 +126,7 @@ int get_r() {
   ADC10CTL1 = ADC_R;
   wait(100);
   ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  wait(100);
   while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
   ADC10CTL0 &= ~ENC;
   return ADC10MEM;
@@ -135,6 +136,7 @@ int get_theta() {
   ADC10CTL1 = ADC_T;
   wait(100);
   ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  wait(100);
   while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
   ADC10CTL0 &= ~ENC;
   return ADC10MEM;
@@ -144,6 +146,7 @@ int get_phi() {
   ADC10CTL1 = ADC_P;
   wait(100);
   ADC10CTL0 |= ENC + ADC10SC;           // Sampling and conversion start
+  wait(100);
   while (ADC10CTL1 &ADC10BUSY);         // wait until not ADC10BUSY?
   ADC10CTL0 &= ~ENC;
   return ADC10MEM;
@@ -196,13 +199,13 @@ void main(void)
     output(get_theta());
   }
   
-  altto(900);
-  azmto(550);
-  for (; alt < 1325; ) {
+  altto(850);
+  azmto(790);
+  for (; alt < 1050; ) {
     
-    for(; azm < 1170; ) {
+    for(; azm < 990; ) {
       
-      wait(1000);
+      wait(20000);
       
       output(0);
       output(azm);
@@ -211,13 +214,17 @@ void main(void)
       output(get_phi());
       output(get_theta());
       
-      azmto(azm + 50);
+      azmto(azm + 20);
       
     }
     
-    altto(alt + 50);
-    azmto(550);
+    altto(alt + 20);
+    azmto(790);
+    wait(40000);
   }
+  
+  output(2);
+  output(1);
   
   while(1); // loop forever
 }

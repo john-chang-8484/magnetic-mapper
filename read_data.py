@@ -3,7 +3,7 @@ import serial # for serial port
 import numpy as np # for arrays, numerical processing
 import csv
 
-TEST = True # testing mode
+TEST = False # testing mode
 
 #needs: python2, pyserial, numpy, 
 #0) flash the serial temperature measurement program into the msp430

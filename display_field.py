@@ -28,14 +28,14 @@ RAD_PER_PWM = RAD_PER_DEG / PWM_PER_DEG
 # physical parameters:
 
 # zero point for altitude
-ALT_0 = 995. # [pwm us]
+ALT_0 = 950. # [pwm us]
 # zero point for azimuth (not quite so important)
-AZM_0 = 750. # [pwm us]
+AZM_0 = 890. # [pwm us]
 
 # the space sweepable by the arm looks like a torus
 # a torus has two parameters, the major and minor radius
-R_MAJ = 0.03 # [m]
-R_MIN = 0.15 # [m]
+R_MAJ = 0.028 # [m]
+R_MIN = 0.17  # [m]
 
 
 # rendering parameters:
@@ -115,6 +115,15 @@ def render(screen, view, field_points):
     
     max_field = max(map(lambda fp: length(fp.field), field_points)) # the maximum B field strength
     
+    # draw bases of vectors:
+    for fp in field_points:
+        tail = fp.point
+        p = proj_fn(tail, view)
+        if p != None:
+            pygame.draw.circle(screen, (150, 100, 20),
+                             convert_to_pix(p),
+                             int(window[0] * BALL_RAD * get_s(tail, view)))
+    
     # draw vectors:
     for fp in field_points:
         tail = fp.point
@@ -125,18 +134,10 @@ def render(screen, view, field_points):
             pygame.draw.line(screen, (50, 205, 250),
                              convert_to_pix(p_s),
                              convert_to_pix(p_f))
-    # draw bases of vectors:
-    for fp in field_points:
-        tail = fp.point
-        p = proj_fn(tail, view)
-        if p != None:
-            pygame.draw.circle(screen, (150, 100, 20),
-                             convert_to_pix(p),
-                             int(window[0] * BALL_RAD * get_s(tail, view)))
 
 
 # make a view corresponding to these angles:
-def get_view(phi, theta, offset=3.):
+def get_view(phi, theta, offset=1.):
     ans = View()
     w = ( math.cos(phi) * math.sin(theta), math.sin(phi) * math.sin(theta), math.cos(theta) )
     ans.offset_vec = constmul(-offset, w)
@@ -191,8 +192,6 @@ def main():
     rows = map(lambda l: map(lambda x: float(x), l), rows) # convert to floating point numbers
     
     field_points = map(field_point_from_data, rows)
-    
-    print map(str, field_points)
 
     pygame.init()
     pygame.display.set_caption("Magnetic Field Visualizer")
@@ -205,7 +204,7 @@ def main():
     
     done = False
     while not done:
-        #phi += 0.005
+        phi += 0.005
         #theta += 0.005
         view = get_view(phi, theta)
         render(screen, view, field_points)
