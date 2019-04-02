@@ -226,6 +226,9 @@ void main(void)
   output(2);
   output(1);
   
+  altto(1000);
+  azmto(1000);
+  
   while(1); // loop forever
 }
 
