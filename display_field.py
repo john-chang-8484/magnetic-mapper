@@ -56,7 +56,8 @@ class View:
         self.plane_u = (1., 0., 0.) # plane x direction
         self.plane_v = (0., 1., 0.) # plane y direction
         self.plane_w = (0., 0., -1.) # plane z direction (into screen)
-        self.view_back = 2.0        # offset of viewpoint in the negative z direction (out of screen)
+        self.view_back = 0.5        # offset of viewpoint in the negative z direction (out of screen)
+        self.zoom = 10.  # zoom factor
 
 
 # some vector functions:
@@ -91,17 +92,9 @@ def point_proj(vec, view):
     w = dot(r, view.plane_w)
     if (w < 0.1): # crop things behind the viewing screen
         return None
-    s = view.view_back / w # scale factor that accounts for forshortening
+    s = view.zoom * view.view_back / (w + view.view_back) # scale factor that accounts for forshortening
     return (u * s, v * s)
 
-# get the s for a vector and a view
-def get_s(vec, view):
-    r = sub(vec, view.offset_vec)
-    w = dot(r, view.plane_w)
-    if (w < 0.1): # crop things behind the viewing screen
-        return None
-    s = view.view_back / w # scale factor that accounts for forshortening
-    return s
 
 # convert a 2d vector to pixel locations
 def convert_to_pix(v):
@@ -135,7 +128,7 @@ def render(screen, view, field_points):
 
 
 # make a view corresponding to these angles:
-def get_view(phi, theta, offset=1.):
+def get_view(phi, theta, offset=0.5):
     ans = View()
     w = ( math.cos(phi) * math.sin(theta), math.sin(phi) * math.sin(theta), math.cos(theta) )
     ans.offset_vec = constmul(-offset, w)
@@ -167,8 +160,9 @@ def field_point_from_data(data):
     B_phi   = data[3]
     B_theta = data[4]
     
-    pos = add(constmul(R_MAJ, (cos(azm), sin(azm), 0.)),
-              constmul(R_MIN, (cos(alt)*cos(azm), cos(alt)*sin(azm), sin(alt))))
+    pos = add(add(constmul(R_MAJ, (cos(azm), sin(azm), 0.)),
+                  constmul(R_MIN, (cos(alt)*cos(azm), cos(alt)*sin(azm), sin(alt)))),
+                  (-(R_MAJ + R_MIN), 0., 0.)) # offset to put readings more or less at origin
     
     B = (0., 0., 0.)
     B = add(B, constmul(B_r, (cos(alt)*cos(azm), cos(alt)*sin(azm), sin(alt))))
