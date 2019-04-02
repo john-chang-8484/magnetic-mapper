@@ -9,7 +9,7 @@ import numpy as np
 import csv
 
 #Constants: ----------------------------------------------------------------
-window = [600, 600]#sets the size of the window
+window = [1000, 1000]#sets the size of the window
 tau = 6.28318530717958#Equal to 2pi. One full turn in radians.
 
 # integration step:
@@ -44,7 +44,7 @@ R_MIN = 0.17  # [m]
 MAX_VEC = 0.07 # [m]
 
 # radius of the balls
-BALL_RAD = 0.005 # [m]
+BALL_RAD = 0.0005 # [m]
 
 #---------------------------------------------------------------------------
 
@@ -115,15 +115,6 @@ def render(screen, view, field_points):
     
     max_field = max(map(lambda fp: length(fp.field), field_points)) # the maximum B field strength
     
-    # draw bases of vectors:
-    for fp in field_points:
-        tail = fp.point
-        p = proj_fn(tail, view)
-        if p != None:
-            pygame.draw.circle(screen, (150, 100, 20),
-                             convert_to_pix(p),
-                             int(window[0] * BALL_RAD * get_s(tail, view)))
-    
     # draw vectors:
     for fp in field_points:
         tail = fp.point
@@ -131,9 +122,16 @@ def render(screen, view, field_points):
         p_s = proj_fn(tip, view)
         p_f = proj_fn(tail,     view)
         if p_s != None and p_f != None:
-            pygame.draw.line(screen, (50, 205, 250),
+            pygame.draw.line(screen, (40, 160, 200),
                              convert_to_pix(p_s),
                              convert_to_pix(p_f))
+     
+    # draw bases of vectors:
+    for fp in field_points:
+        tail = fp.point
+        p = proj_fn(tail, view)
+        if p != None:
+            screen.set_at(convert_to_pix(p), (255, 255, 255))
 
 
 # make a view corresponding to these angles:
@@ -177,7 +175,6 @@ def field_point_from_data(data):
     B = add(B, constmul(B_phi, (sin(azm), -cos(azm), 0.)))
     B = add(B, constmul(B_theta, (-sin(alt)*cos(azm), -sin(alt)*sin(azm), cos(alt))))
     
-    print B, pos
     return FieldPoint(pos, B)
 
 
