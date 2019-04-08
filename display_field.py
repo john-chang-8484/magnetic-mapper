@@ -41,7 +41,7 @@ R_MIN = 0.17  # [m]
 # rendering parameters:
 
 # maximum size a field vector can be drawn as
-MAX_VEC = 0.07 # [m]
+MAX_VEC = 0.01 # [m]
 
 # radius of the balls
 BALL_RAD = 0.0005 # [m]
